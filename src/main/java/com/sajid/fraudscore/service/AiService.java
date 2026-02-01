@@ -1,32 +1,50 @@
 package com.sajid.fraudscore.service;
 
-import org.springframework.http.ResponseEntity;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sajid.fraudscore.dto.FraudAnalysisDto;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
 import java.util.Map;
 
 @Service
 public class AiService {
 
-    public Map<String, Object> restClientChat(String prompt) {
-        try {
-            RestClient restClient = RestClient.create();
-            ResponseEntity<?> response = restClient.post()
-                    .uri("http://127.0.0.1:8000/baseten-ai/prompt")
-                    .body(Map.of("prompt", prompt))
-                    .retrieve()
-                    .toEntity(Map.class);
+    private final RestTemplate restClient;
 
-            // 5️⃣ Return Map
-            return response != null ? (Map<String, Object>) response.getBody() : Map.of();
-        } catch (RestClientException e) {
-            e.printStackTrace();
-            return Map.of("error", e.getMessage());
-        }
+    public AiService(RestTemplate restClient) {
+        this.restClient = restClient;
     }
 
 
+    public Map<String, Object> analyzeFraud(FraudAnalysisDto fraudAnalysisDto) {
+        try {
+
+            Map<String, Object> requestBody = Map.of(
+                    "entityName", fraudAnalysisDto.getEntityName(),
+                    "posts", fraudAnalysisDto.getPosts(),
+                    "comments", fraudAnalysisDto.getComments()
+            );
 
 
+            Map<String, Object> responseMap = restClient.postForObject(
+                    "http://127.0.0.1:8000/baseten-ai/get-score",
+                    requestBody,
+                    Map.class
+            );
+
+            IO.println(responseMap);
+            return responseMap;
+
+        } catch (RestClientException e) {
+            e.printStackTrace();
+
+            // Return a map with error info
+            return Map.of(
+                    "analysis_status", "failed",
+                    "summary", "Error: " + e.getMessage()
+            );
+        }
+    }
 }

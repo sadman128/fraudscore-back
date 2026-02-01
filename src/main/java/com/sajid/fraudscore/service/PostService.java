@@ -94,10 +94,11 @@ public class PostService {
 
     public void deletePost(String id) {
         postRepository.deleteById(id);
-        // Note: Image folder cleanup could be added here if needed
+        // image folder cleanup could be added here if needed
     }
 
     public List<Post> getAllPosts(String currentUsername) {
+        IO.println("gettin all post for : " + currentUsername);
         List<Post> posts = postRepository.findAllByOrderByPostedAtDesc(); // or your query
         return enrichWithUserReactions(posts, currentUsername);
     }
@@ -110,21 +111,24 @@ public class PostService {
 
     private List<Post> enrichWithUserReactions(List<Post> posts, String currentUsername) {
         if (currentUsername == null) {
-            // Guest user: no green/red states
+            // Guest user: no green/red states and not own post
             posts.forEach(post -> {
                 post.setOwnLiked(false);
                 post.setOwnDisliked(false);
+                post.setOwnPosted(false);
             });
             return posts;
         }
 
         return posts.stream().map(post -> {
-            // Calculate based on CURRENT user only
             post.setOwnLiked(post.getLikedPostUsers().contains(currentUsername));
             post.setOwnDisliked(post.getDislikedPostUsers().contains(currentUsername));
+            post.setOwnPosted(currentUsername.equals(post.getPostedBy()));
+
             return post;
         }).collect(Collectors.toList());
     }
+
 
 
 }

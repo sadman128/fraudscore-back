@@ -36,7 +36,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**", "/api/verifyLogin").permitAll()
                         .requestMatchers("/api/posts/*/images/**").permitAll()
-                        .requestMatchers("/api/posts/*/comments").permitAll()
+                        .requestMatchers("/api/coffee/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -52,6 +52,15 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         return username -> User.withUsername(username).password("").roles("").build();
     }
+
+    /*
+    1. turn on ngrok,
+    2. set ngrok url in application properties
+    3. turn ai python 8000
+    4. front end 5173
+    5. backend 5000
+
+    */
 
 
 }

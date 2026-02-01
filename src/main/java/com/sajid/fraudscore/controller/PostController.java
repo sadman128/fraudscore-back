@@ -1,8 +1,10 @@
 package com.sajid.fraudscore.controller;
 
 import com.sajid.fraudscore.component.JwtService;
+import com.sajid.fraudscore.model.Payment;
 import com.sajid.fraudscore.model.Post;
 import com.sajid.fraudscore.repository.UserRepository;
+import com.sajid.fraudscore.service.CoffeeService;
 import com.sajid.fraudscore.service.PostService;
 import org.apache.tomcat.util.http.parser.Authorization;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,24 +26,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * PostController - REST API endpoints for fraud reports
- * Handles post creation, retrieval, searching, and image serving
- */
+
 @RestController
 @RequestMapping("/api/posts")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class PostController {
 
     public final PostService postService;
     public final JwtService jwtService;
+    public final CoffeeService coffeeService;
 
     @Value("${upload.path:uploads}")
     private String uploadPath;
 
-    public PostController(PostService postService, JwtService jwtService) {
+    public PostController(PostService postService, JwtService jwtService, CoffeeService coffeeService) {
         this.postService = postService;
         this.jwtService = jwtService;
+        this.coffeeService = coffeeService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -90,8 +91,9 @@ public class PostController {
 
 
     @GetMapping
-    public ResponseEntity<List<Post>> getPosts(Authentication auth) {
-        String currentUsername = auth != null ? auth.getName() : null;
+    public ResponseEntity<List<Post>> getPosts(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String currentUsername = jwtService.extractSubject(token);
         List<Post> posts = postService.getAllPosts(currentUsername);
         return ResponseEntity.ok(posts);
     }
@@ -114,7 +116,6 @@ public class PostController {
         Post post = postOpt.get();
         String folderPath = post.getImageFolder();
 
-        // Return empty list if no images folder exists
         if (folderPath == null || folderPath.isEmpty()) {
             return ResponseEntity.ok(new ArrayList<>());
         }
@@ -125,8 +126,6 @@ public class PostController {
                 return ResponseEntity.ok(new ArrayList<>());
             }
 
-            // ✅ FIXED: Return just the filenames, not full URLs
-            // Frontend will construct URLs using post ID + filename
             List<String> imageNames = Files.list(directory)
                     .filter(Files::isRegularFile)
                     .map(path -> path.getFileName().toString())  // Just the filename
@@ -142,10 +141,6 @@ public class PostController {
         }
     }
 
-    /**
-     * GET /api/posts/{id}/images/{filename} - Serve individual image file
-     * Returns the actual image file with correct content type
-     */
     @GetMapping("/{id}/images/{filename}")
     public ResponseEntity<?> getImage(
             @PathVariable String id,
@@ -158,24 +153,22 @@ public class PostController {
 
             Post post = postOpt.get();
 
-            // Construct full file path
+
             Path imagePath = Paths.get(post.getImageFolder()).resolve(filename);
 
-            // Security: Prevent directory traversal
             if (!imagePath.toRealPath().startsWith(Paths.get(uploadPath).toRealPath())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
-            // Check if file exists
             if (!Files.exists(imagePath)) {
                 return ResponseEntity.notFound().build();
             }
 
-            // Create resource
+
             Resource resource = new UrlResource(imagePath.toUri());
             String contentType = Files.probeContentType(imagePath);
 
-            // Return image with proper headers
+
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType != null ? contentType : "image/jpeg"))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
