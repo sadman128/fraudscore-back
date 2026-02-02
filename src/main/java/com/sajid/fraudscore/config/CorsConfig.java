@@ -11,21 +11,22 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
 
-        // Use patterns (supports wildcards)
+        CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",
                 "https://*.ngrok-free.app",
                 "https://sandbox.sslcommerz.com",
-                "https://securepay.sslcommerz.com"
-        )); // wildcards belong here, not in allowedOrigins [web:497]
+                "https://securepay.sslcommerz.com",
+                "http://192.168.*.*"
+                ));
 
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true); // only if you use cookies/session [web:500]
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
