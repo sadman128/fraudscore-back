@@ -15,8 +15,7 @@
 **FraudScore** is a full-stack social media platform for **fraud awareness** and community discussion. Users create posts, share fraud experiences, view detailed fraud profiles with risk scores, and engage through likes/dislikes/comments.
 
 Production-ready **Spring Boot 4.x** (Java 25) backend + **React 18** (Vite + Tailwind CSS) frontend with JWT authentication and MongoDB Atlas.
-<a href="https://github.com/sadman128/fraudscore-back" target="_blank">Backend</a>
-<a href="https://github.com/sadman128/fraudscore-ai" target="_blank">AI</a>
+
 > 💡 Perfect for fraud detection teams, cybersecurity communities, awareness campaigns.
 
 ---
